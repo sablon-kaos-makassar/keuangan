@@ -246,11 +246,20 @@ async function submitTransaksi() {
   btn.disabled = true;
 
   try {
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tipe: tipeAktif, kategori, nominal, akun, catatan })
+    // const res = await fetch(API_URL, {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify({ tipe: tipeAktif, kategori, nominal, akun, catatan })
+    // });
+    const params = new URLSearchParams({ 
+      action: 'submit',
+      tipe: tipeAktif, 
+      kategori, 
+      nominal, 
+      akun, 
+      catatan 
     });
+    const res = await fetch(API_URL + '?' + params.toString());
     const result = await res.json();
     btn.disabled = false;
     btn.textContent = tipeAktif === 'keluar' ? 'Simpan Pengeluaran' : 'Simpan Pemasukan';
