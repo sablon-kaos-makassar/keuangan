@@ -55,6 +55,7 @@
   .txn-meta { font-size: 12px; color: #999; margin-top: 2px; }
   .txn-plus { font-size: 15px; font-weight: 700; color: #1D9E75; white-space: nowrap; }
   .txn-minus { font-size: 15px; font-weight: 700; color: #E24B4A; white-space: nowrap; }
+  .txn-transfer { font-size: 15px; font-weight: 700; color: #4F6EF7; white-space: nowrap; }
 
   .akun-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #F5F5F5; }
   .akun-item:last-child { border-bottom: none; }
@@ -64,10 +65,11 @@
   .total-row span { font-size: 15px; font-weight: 700; }
 
   /* Form */
-  .tipe-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
-  .tipe-btn { padding: 14px; border: 2px solid #E8ECF0; border-radius: 12px; background: white; font-size: 15px; font-weight: 600; cursor: pointer; text-align: center; }
+  .tipe-toggle { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+  .tipe-btn { padding: 12px 6px; border: 2px solid #E8ECF0; border-radius: 12px; background: white; font-size: 13px; font-weight: 600; cursor: pointer; text-align: center; }
   .tipe-btn.keluar.active { background: #FCEBEB; border-color: #E24B4A; color: #E24B4A; }
   .tipe-btn.masuk.active { background: #E1F5EE; border-color: #1D9E75; color: #1D9E75; }
+  .tipe-btn.transfer.active { background: #EEF2FF; border-color: #4F6EF7; color: #4F6EF7; }
 
   .form-group { margin-bottom: 16px; }
   .form-group label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 8px; }
@@ -81,6 +83,7 @@
   .submit-btn:disabled { opacity: 0.6; }
   .submit-btn.keluar { background: #E24B4A; color: white; }
   .submit-btn.masuk { background: #1D9E75; color: white; }
+  .submit-btn.transfer { background: #4F6EF7; color: white; }
 
   .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); padding: 14px 24px; border-radius: 24px; font-size: 14px; font-weight: 600; color: white; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; max-width: 90%; text-align: center; }
   .toast.show { opacity: 1; }
@@ -94,7 +97,6 @@
 </head>
 <body>
 
-<!-- GANTI DENGAN URL DEPLOYMENT APPS SCRIPT KAMU -->
 <script>const API_URL = 'https://script.google.com/macros/s/AKfycbynl_hH3tILw5GKDLUw7Qr-9waxY-L5rGW4EuUlF1cJVbVDcxvlVAvZwuo9Teh7rfLs/exec';</script>
 
 <div class="topbar">
@@ -123,30 +125,72 @@
       <div class="tipe-toggle">
         <div class="tipe-btn keluar active" onclick="setTipe('keluar')">💸 Keluar</div>
         <div class="tipe-btn masuk" onclick="setTipe('masuk')">💰 Masuk</div>
+        <div class="tipe-btn transfer" onclick="setTipe('transfer')">🔄 Transfer</div>
       </div>
-      <div class="form-group" id="group-kategori-expense">
-        <label>Kategori</label>
-        <select id="input-kategori-expense"><option value="">Pilih kategori...</option></select>
+
+      <!-- Form Keluar -->
+      <div id="group-keluar">
+        <div class="form-group">
+          <label>Kategori</label>
+          <select id="input-kategori-expense"><option value="">Pilih kategori...</option></select>
+        </div>
+        <div class="form-group">
+          <label>Nominal (Rp)</label>
+          <input type="number" id="input-nominal-keluar" placeholder="contoh: 50000" inputmode="numeric">
+        </div>
+        <div class="form-group">
+          <label>Akun Kas</label>
+          <select id="input-akun-keluar"><option value="">Pilih akun...</option></select>
+        </div>
+        <div class="form-group">
+          <label>Catatan (opsional)</label>
+          <input type="text" id="input-catatan-keluar" placeholder="contoh: nasi ayam bakar">
+        </div>
       </div>
-      <div class="form-group" id="group-kategori-income" style="display:none">
-        <label>Kategori</label>
-        <select id="input-kategori-income">
-          <option value="Gaji">Gaji</option>
-          <option value="Affiliate">Affiliate</option>
-        </select>
+
+      <!-- Form Masuk -->
+      <div id="group-masuk" style="display:none">
+        <div class="form-group">
+          <label>Kategori</label>
+          <select id="input-kategori-income">
+            <option value="Gaji">Gaji</option>
+            <option value="Affiliate">Affiliate</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Nominal (Rp)</label>
+          <input type="number" id="input-nominal-masuk" placeholder="contoh: 5000000" inputmode="numeric">
+        </div>
+        <div class="form-group">
+          <label>Akun Kas</label>
+          <select id="input-akun-masuk"><option value="">Pilih akun...</option></select>
+        </div>
+        <div class="form-group">
+          <label>Catatan (opsional)</label>
+          <input type="text" id="input-catatan-masuk" placeholder="opsional">
+        </div>
       </div>
-      <div class="form-group">
-        <label>Nominal (Rp)</label>
-        <input type="number" id="input-nominal" placeholder="contoh: 50000" inputmode="numeric">
+
+      <!-- Form Transfer -->
+      <div id="group-transfer" style="display:none">
+        <div class="form-group">
+          <label>Dari Akun</label>
+          <select id="transfer-dari"><option value="">Pilih akun asal...</option></select>
+        </div>
+        <div class="form-group">
+          <label>Ke Akun</label>
+          <select id="transfer-tujuan"><option value="">Pilih akun tujuan...</option></select>
+        </div>
+        <div class="form-group">
+          <label>Nominal (Rp)</label>
+          <input type="number" id="input-nominal-transfer" placeholder="contoh: 100000" inputmode="numeric">
+        </div>
+        <div class="form-group">
+          <label>Catatan (opsional)</label>
+          <input type="text" id="input-catatan-transfer" placeholder="opsional">
+        </div>
       </div>
-      <div class="form-group">
-        <label>Akun Kas</label>
-        <select id="input-akun"><option value="">Pilih akun...</option></select>
-      </div>
-      <div class="form-group">
-        <label>Catatan (opsional)</label>
-        <input type="text" id="input-catatan" placeholder="contoh: nasi ayam bakar">
-      </div>
+
       <button class="submit-btn keluar" id="submit-btn" onclick="submitTransaksi()">Simpan Pengeluaran</button>
     </div>
   </div>
@@ -178,9 +222,10 @@ function setTipe(tipe) {
   document.querySelector('.tipe-btn.' + tipe).classList.add('active');
   const btn = document.getElementById('submit-btn');
   btn.className = 'submit-btn ' + tipe;
-  btn.textContent = tipe === 'keluar' ? 'Simpan Pengeluaran' : 'Simpan Pemasukan';
-  document.getElementById('group-kategori-expense').style.display = tipe === 'keluar' ? 'block' : 'none';
-  document.getElementById('group-kategori-income').style.display = tipe === 'masuk' ? 'block' : 'none';
+  btn.textContent = tipe === 'keluar' ? 'Simpan Pengeluaran' : tipe === 'masuk' ? 'Simpan Pemasukan' : 'Simpan Transfer';
+  document.getElementById('group-keluar').style.display = tipe === 'keluar' ? 'block' : 'none';
+  document.getElementById('group-masuk').style.display = tipe === 'masuk' ? 'block' : 'none';
+  document.getElementById('group-transfer').style.display = tipe === 'transfer' ? 'block' : 'none';
 }
 
 function formatRp(n) {
@@ -217,22 +262,67 @@ async function loadData() {
 
 function populateDropdowns() {
   if (!appData) return;
+
   const selKat = document.getElementById('input-kategori-expense');
   selKat.innerHTML = '<option value="">Pilih kategori...</option>';
   appData.kuota.forEach(k => {
     selKat.innerHTML += `<option value="${k.kategori}">${k.kategori}</option>`;
   });
-  const selAkun = document.getElementById('input-akun');
-  selAkun.innerHTML = '<option value="">Pilih akun...</option>';
-  appData.akunList.forEach(a => {
-    selAkun.innerHTML += `<option value="${a.nama}">${a.nama}</option>`;
+
+  ['input-akun-keluar', 'input-akun-masuk', 'transfer-dari', 'transfer-tujuan'].forEach(id => {
+    const sel = document.getElementById(id);
+    const placeholder = id.includes('dari') ? 'Pilih akun asal...' : id.includes('tujuan') ? 'Pilih akun tujuan...' : 'Pilih akun...';
+    sel.innerHTML = `<option value="">${placeholder}</option>`;
+    appData.akunList.forEach(a => {
+      sel.innerHTML += `<option value="${a.nama}">${a.nama}</option>`;
+    });
   });
 }
 
 async function submitTransaksi() {
-  const nominal = parseInt(document.getElementById('input-nominal').value);
-  const akun = document.getElementById('input-akun').value;
-  const catatan = document.getElementById('input-catatan').value.trim();
+  const btn = document.getElementById('submit-btn');
+
+  if (tipeAktif === 'transfer') {
+    const dari = document.getElementById('transfer-dari').value;
+    const tujuan = document.getElementById('transfer-tujuan').value;
+    const nominal = parseInt(document.getElementById('input-nominal-transfer').value);
+    const catatan = document.getElementById('input-catatan-transfer').value.trim();
+
+    if (!dari) { showToast('⚠️ Pilih akun asal', 'error'); return; }
+    if (!tujuan) { showToast('⚠️ Pilih akun tujuan', 'error'); return; }
+    if (dari === tujuan) { showToast('⚠️ Akun asal dan tujuan tidak boleh sama', 'error'); return; }
+    if (!nominal || isNaN(nominal) || nominal <= 0) { showToast('⚠️ Nominal tidak valid', 'error'); return; }
+
+    btn.textContent = 'Menyimpan...';
+    btn.disabled = true;
+
+    try {
+      const params = new URLSearchParams({ action: 'submit', tipe: 'transfer', kategori: 'transfer', nominal, akun: dari, catatan: tujuan + (catatan ? '|' + catatan : '') });
+      const res = await fetch(API_URL + '?' + params.toString());
+      const result = await res.json();
+      btn.disabled = false;
+      btn.textContent = 'Simpan Transfer';
+      if (result.ok) {
+        showToast('✅ ' + result.msg, 'success');
+        document.getElementById('input-nominal-transfer').value = '';
+        document.getElementById('input-catatan-transfer').value = '';
+        document.getElementById('transfer-dari').value = '';
+        document.getElementById('transfer-tujuan').value = '';
+        loadData();
+      } else {
+        showToast('❌ ' + result.msg, 'error');
+      }
+    } catch(err) {
+      btn.disabled = false;
+      btn.textContent = 'Simpan Transfer';
+      showToast('❌ ' + err.message, 'error');
+    }
+    return;
+  }
+
+  const nominal = parseInt(document.getElementById(tipeAktif === 'keluar' ? 'input-nominal-keluar' : 'input-nominal-masuk').value);
+  const akun = document.getElementById(tipeAktif === 'keluar' ? 'input-akun-keluar' : 'input-akun-masuk').value;
+  const catatan = document.getElementById(tipeAktif === 'keluar' ? 'input-catatan-keluar' : 'input-catatan-masuk').value.trim();
   const kategori = tipeAktif === 'keluar'
     ? document.getElementById('input-kategori-expense').value
     : document.getElementById('input-kategori-income').value;
@@ -241,33 +331,20 @@ async function submitTransaksi() {
   if (!nominal || isNaN(nominal) || nominal <= 0) { showToast('⚠️ Nominal tidak valid', 'error'); return; }
   if (!akun) { showToast('⚠️ Pilih akun kas dulu', 'error'); return; }
 
-  const btn = document.getElementById('submit-btn');
   btn.textContent = 'Menyimpan...';
   btn.disabled = true;
 
   try {
-    // const res = await fetch(API_URL, {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ tipe: tipeAktif, kategori, nominal, akun, catatan })
-    // });
-    const params = new URLSearchParams({ 
-      action: 'submit',
-      tipe: tipeAktif, 
-      kategori, 
-      nominal, 
-      akun, 
-      catatan 
-    });
+    const params = new URLSearchParams({ action: 'submit', tipe: tipeAktif, kategori, nominal, akun, catatan });
     const res = await fetch(API_URL + '?' + params.toString());
     const result = await res.json();
     btn.disabled = false;
     btn.textContent = tipeAktif === 'keluar' ? 'Simpan Pengeluaran' : 'Simpan Pemasukan';
     if (result.ok) {
       showToast('✅ ' + result.msg, 'success');
-      document.getElementById('input-nominal').value = '';
-      document.getElementById('input-catatan').value = '';
-      document.getElementById('input-kategori-expense').value = '';
+      document.getElementById(tipeAktif === 'keluar' ? 'input-nominal-keluar' : 'input-nominal-masuk').value = '';
+      document.getElementById(tipeAktif === 'keluar' ? 'input-catatan-keluar' : 'input-catatan-masuk').value = '';
+      if (tipeAktif === 'keluar') document.getElementById('input-kategori-expense').value = '';
       loadData();
     } else {
       showToast('❌ ' + result.msg, 'error');
@@ -328,15 +405,25 @@ function renderTransaksi() {
   } else {
     appData.recent.forEach(t => {
       const isIncome = t.tipe === 'income';
+      const isTransferIn = t.tipe === 'transfer in';
+      const isTransferOut = t.tipe === 'transfer out';
+      const isTransfer = isTransferIn || isTransferOut;
+
+      let icon, bgColor, amountClass, prefix;
+      if (isIncome) { icon = '💰'; bgColor = '#E1F5EE'; amountClass = 'txn-plus'; prefix = '+'; }
+      else if (isTransferIn) { icon = '📥'; bgColor = '#EEF2FF'; amountClass = 'txn-transfer'; prefix = '↓'; }
+      else if (isTransferOut) { icon = '📤'; bgColor = '#EEF2FF'; amountClass = 'txn-transfer'; prefix = '↑'; }
+      else { icon = '💸'; bgColor = '#FCEBEB'; amountClass = 'txn-minus'; prefix = '-'; }
+
       html += `<div class="txn-item">
         <div class="txn-left">
-          <div class="txn-icon" style="background:${isIncome ? '#E1F5EE' : '#FCEBEB'}">${isIncome ? '💰' : '💸'}</div>
+          <div class="txn-icon" style="background:${bgColor}">${icon}</div>
           <div>
             <div class="txn-cat">${t.kategori}</div>
             <div class="txn-meta">${t.akun} · ${t.tanggal}${t.catatan ? ' · ' + t.catatan : ''}</div>
           </div>
         </div>
-        <div class="${isIncome ? 'txn-plus' : 'txn-minus'}">${isIncome ? '+' : '-'}${formatRpFull(t.nominal)}</div>
+        <div class="${amountClass}">${prefix}${formatRpFull(t.nominal)}</div>
       </div>`;
     });
   }
