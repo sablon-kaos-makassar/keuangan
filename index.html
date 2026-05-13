@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Keuangan Pribadi</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F0F2F5; color: #1a1a1a; font-size: 16px; }
+
+  .topbar { background: #1E3A5F; color: white; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; }
+  .topbar h1 { font-size: 18px; font-weight: 700; }
+  .topbar .bulan { font-size: 13px; opacity: 0.7; margin-top: 2px; }
+  .refresh-btn { background: rgba(255,255,255,0.15); border: none; color: white; padding: 8px 14px; border-radius: 20px; font-size: 13px; cursor: pointer; }
+
+  .tabs { display: flex; background: white; border-bottom: 1px solid #E8ECF0; position: sticky; top: 0; z-index: 10; }
+  .tab { flex: 1; padding: 14px; text-align: center; font-size: 14px; font-weight: 500; color: #888; cursor: pointer; border-bottom: 2px solid transparent; }
+  .tab.active { color: #1E3A5F; border-bottom-color: #1E3A5F; }
+
+  .container { padding: 16px; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .metric { background: white; border-radius: 16px; padding: 18px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+  .metric .lbl { font-size: 13px; color: #888; margin-bottom: 8px; }
+  .metric .val { font-size: 26px; font-weight: 700; line-height: 1.1; }
+  .metric .val.green { color: #1D9E75; }
+  .metric .val.red { color: #E24B4A; }
+  .metric .val.blue { color: #2E6DA4; }
+
+  .card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+  .card-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+  .badge { font-size: 12px; padding: 4px 12px; border-radius: 20px; font-weight: 600; }
+  .badge-ok { background: #E1F5EE; color: #0F6E56; }
+  .badge-warn { background: #FEF3CD; color: #856404; }
+  .badge-over { background: #FCEBEB; color: #A32D2D; }
+
+  .quota-item { margin-bottom: 16px; }
+  .quota-item:last-child { margin-bottom: 0; }
+  .quota-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .quota-name { font-size: 15px; font-weight: 500; }
+  .quota-info { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #666; }
+  .bar-bg { height: 8px; background: #F0F2F5; border-radius: 4px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; min-width: 0; }
+  .bar-ok { background: #1D9E75; }
+  .bar-warn { background: #EF9F27; }
+  .bar-over { background: #E24B4A; }
+
+  .txn-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #F5F5F5; }
+  .txn-item:last-child { border-bottom: none; }
+  .txn-left { display: flex; align-items: center; gap: 12px; }
+  .txn-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .txn-cat { font-size: 15px; font-weight: 500; }
+  .txn-meta { font-size: 12px; color: #999; margin-top: 2px; }
+  .txn-plus { font-size: 15px; font-weight: 700; color: #1D9E75; white-space: nowrap; }
+  .txn-minus { font-size: 15px; font-weight: 700; color: #E24B4A; white-space: nowrap; }
+
+  .akun-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #F5F5F5; }
+  .akun-item:last-child { border-bottom: none; }
+  .akun-nama { font-size: 15px; }
+  .akun-saldo { font-size: 15px; font-weight: 600; }
+  .total-row { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; margin-top: 4px; border-top: 2px solid #E8ECF0; }
+  .total-row span { font-size: 15px; font-weight: 700; }
+
+  /* Form */
+  .tipe-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+  .tipe-btn { padding: 14px; border: 2px solid #E8ECF0; border-radius: 12px; background: white; font-size: 15px; font-weight: 600; cursor: pointer; text-align: center; }
+  .tipe-btn.keluar.active { background: #FCEBEB; border-color: #E24B4A; color: #E24B4A; }
+  .tipe-btn.masuk.active { background: #E1F5EE; border-color: #1D9E75; color: #1D9E75; }
+
+  .form-group { margin-bottom: 16px; }
+  .form-group label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 8px; }
+  .form-group select, .form-group input {
+    width: 100%; padding: 14px; border: 1.5px solid #E8ECF0; border-radius: 12px;
+    font-size: 15px; background: white; color: #1a1a1a; -webkit-appearance: none;
+  }
+  .form-group select:focus, .form-group input:focus { outline: none; border-color: #1E3A5F; }
+
+  .submit-btn { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 4px; }
+  .submit-btn:disabled { opacity: 0.6; }
+  .submit-btn.keluar { background: #E24B4A; color: white; }
+  .submit-btn.masuk { background: #1D9E75; color: white; }
+
+  .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); padding: 14px 24px; border-radius: 24px; font-size: 14px; font-weight: 600; color: white; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; max-width: 90%; text-align: center; }
+  .toast.show { opacity: 1; }
+  .toast.success { background: #1D9E75; }
+  .toast.error { background: #E24B4A; }
+
+  .loading { text-align: center; padding: 50px; color: #999; font-size: 15px; }
+  .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid #E8ECF0; border-top-color: #1E3A5F; border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 8px; vertical-align: middle; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- GANTI DENGAN URL DEPLOYMENT APPS SCRIPT KAMU -->
+<script>const API_URL = 'https://script.google.com/macros/s/AKfycbynl_hH3tILw5GKDLUw7Qr-9waxY-L5rGW4EuUlF1cJVbVDcxvlVAvZwuo9Teh7rfLs/exec';</script>
+
+<div class="topbar">
+  <div>
+    <h1>📒 Keuangan Pribadi</h1>
+    <div class="bulan" id="bulan-label">Memuat...</div>
+  </div>
+  <button class="refresh-btn" onclick="loadData()">↻ Refresh</button>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showPage('dashboard', this)">📊 Dashboard</div>
+  <div class="tab" onclick="showPage('input', this)">➕ Input</div>
+  <div class="tab" onclick="showPage('transaksi', this)">🕒 Transaksi</div>
+</div>
+
+<div class="container">
+
+  <div class="page active" id="page-dashboard">
+    <div id="content-dashboard"><div class="loading"><span class="spinner"></span>Memuat data...</div></div>
+  </div>
+
+  <div class="page" id="page-input">
+    <div class="card" style="margin-top:4px">
+      <div class="card-title">Tambah Transaksi</div>
+      <div class="tipe-toggle">
+        <div class="tipe-btn keluar active" onclick="setTipe('keluar')">💸 Keluar</div>
+        <div class="tipe-btn masuk" onclick="setTipe('masuk')">💰 Masuk</div>
+      </div>
+      <div class="form-group" id="group-kategori-expense">
+        <label>Kategori</label>
+        <select id="input-kategori-expense"><option value="">Pilih kategori...</option></select>
+      </div>
+      <div class="form-group" id="group-kategori-income" style="display:none">
+        <label>Kategori</label>
+        <select id="input-kategori-income">
+          <option value="Gaji">Gaji</option>
+          <option value="Affiliate">Affiliate</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Nominal (Rp)</label>
+        <input type="number" id="input-nominal" placeholder="contoh: 50000" inputmode="numeric">
+      </div>
+      <div class="form-group">
+        <label>Akun Kas</label>
+        <select id="input-akun"><option value="">Pilih akun...</option></select>
+      </div>
+      <div class="form-group">
+        <label>Catatan (opsional)</label>
+        <input type="text" id="input-catatan" placeholder="contoh: nasi ayam bakar">
+      </div>
+      <button class="submit-btn keluar" id="submit-btn" onclick="submitTransaksi()">Simpan Pengeluaran</button>
+    </div>
+  </div>
+
+  <div class="page" id="page-transaksi">
+    <div id="content-transaksi"><div class="loading"><span class="spinner"></span>Memuat...</div></div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let appData = null;
+let tipeAktif = 'keluar';
+const bulanNama = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+
+function showPage(page, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  el.classList.add('active');
+  if (page === 'transaksi') renderTransaksi();
+}
+
+function setTipe(tipe) {
+  tipeAktif = tipe;
+  document.querySelectorAll('.tipe-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.tipe-btn.' + tipe).classList.add('active');
+  const btn = document.getElementById('submit-btn');
+  btn.className = 'submit-btn ' + tipe;
+  btn.textContent = tipe === 'keluar' ? 'Simpan Pengeluaran' : 'Simpan Pemasukan';
+  document.getElementById('group-kategori-expense').style.display = tipe === 'keluar' ? 'block' : 'none';
+  document.getElementById('group-kategori-income').style.display = tipe === 'masuk' ? 'block' : 'none';
+}
+
+function formatRp(n) {
+  if (!n && n !== 0) return 'Rp 0';
+  const abs = Math.abs(n);
+  if (abs >= 1000000) return 'Rp ' + (abs/1000000).toFixed(1).replace('.0','') + ' jt';
+  if (abs >= 1000) return 'Rp ' + (abs/1000).toFixed(0) + ' rb';
+  return 'Rp ' + abs.toLocaleString('id-ID');
+}
+
+function formatRpFull(n) {
+  return 'Rp ' + Math.abs(n || 0).toLocaleString('id-ID');
+}
+
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + type + ' show';
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+async function loadData() {
+  document.getElementById('content-dashboard').innerHTML = '<div class="loading"><span class="spinner"></span>Memuat data...</div>';
+  try {
+    const res = await fetch(API_URL + '?action=dashboard');
+    const data = await res.json();
+    appData = data;
+    renderDashboard();
+    populateDropdowns();
+  } catch(err) {
+    document.getElementById('content-dashboard').innerHTML = '<div style="background:#FCEBEB;color:#A32D2D;padding:16px;border-radius:12px;font-size:14px">❌ Gagal memuat: ' + err.message + '</div>';
+  }
+}
+
+function populateDropdowns() {
+  if (!appData) return;
+  const selKat = document.getElementById('input-kategori-expense');
+  selKat.innerHTML = '<option value="">Pilih kategori...</option>';
+  appData.kuota.forEach(k => {
+    selKat.innerHTML += `<option value="${k.kategori}">${k.kategori}</option>`;
+  });
+  const selAkun = document.getElementById('input-akun');
+  selAkun.innerHTML = '<option value="">Pilih akun...</option>';
+  appData.akunList.forEach(a => {
+    selAkun.innerHTML += `<option value="${a.nama}">${a.nama}</option>`;
+  });
+}
+
+async function submitTransaksi() {
+  const nominal = parseInt(document.getElementById('input-nominal').value);
+  const akun = document.getElementById('input-akun').value;
+  const catatan = document.getElementById('input-catatan').value.trim();
+  const kategori = tipeAktif === 'keluar'
+    ? document.getElementById('input-kategori-expense').value
+    : document.getElementById('input-kategori-income').value;
+
+  if (!kategori) { showToast('⚠️ Pilih kategori dulu', 'error'); return; }
+  if (!nominal || isNaN(nominal) || nominal <= 0) { showToast('⚠️ Nominal tidak valid', 'error'); return; }
+  if (!akun) { showToast('⚠️ Pilih akun kas dulu', 'error'); return; }
+
+  const btn = document.getElementById('submit-btn');
+  btn.textContent = 'Menyimpan...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tipe: tipeAktif, kategori, nominal, akun, catatan })
+    });
+    const result = await res.json();
+    btn.disabled = false;
+    btn.textContent = tipeAktif === 'keluar' ? 'Simpan Pengeluaran' : 'Simpan Pemasukan';
+    if (result.ok) {
+      showToast('✅ ' + result.msg, 'success');
+      document.getElementById('input-nominal').value = '';
+      document.getElementById('input-catatan').value = '';
+      document.getElementById('input-kategori-expense').value = '';
+      loadData();
+    } else {
+      showToast('❌ ' + result.msg, 'error');
+    }
+  } catch(err) {
+    btn.disabled = false;
+    btn.textContent = tipeAktif === 'keluar' ? 'Simpan Pengeluaran' : 'Simpan Pemasukan';
+    showToast('❌ ' + err.message, 'error');
+  }
+}
+
+function renderDashboard() {
+  const d = appData;
+  const now = new Date();
+  document.getElementById('bulan-label').textContent = bulanNama[now.getMonth()] + ' ' + now.getFullYear();
+  const amanCount = d.kuota.filter(k => k.terpakai <= k.target).length;
+  let html = '';
+
+  html += `<div class="grid2">
+    <div class="metric"><div class="lbl">💰 Total Income</div><div class="val green">${formatRp(d.totalIncome)}</div></div>
+    <div class="metric"><div class="lbl">💸 Total Expense</div><div class="val red">${formatRp(d.totalExpense)}</div></div>
+    <div class="metric"><div class="lbl">📈 Net</div><div class="val ${d.net >= 0 ? 'green' : 'red'}">${d.net >= 0 ? '+' : ''}${formatRp(d.net)}</div></div>
+    <div class="metric"><div class="lbl">💳 Total Saldo</div><div class="val blue">${formatRp(d.totalSaldo)}</div></div>
+  </div>`;
+
+  html += `<div class="card"><div class="card-title"><span>🎯 Kuota Pengeluaran</span><span class="badge badge-ok">${amanCount} aman</span></div>`;
+  d.kuota.forEach(k => {
+    const pct = k.target > 0 ? Math.min((k.terpakai / k.target) * 100, 100) : 0;
+    const over = k.terpakai > k.target;
+    const warn = !over && pct >= 90;
+    const barClass = over ? 'bar-over' : warn ? 'bar-warn' : 'bar-ok';
+    const badgeClass = over ? 'badge-over' : warn ? 'badge-warn' : 'badge-ok';
+    const badgeText = over ? 'Lewat!' : warn ? 'Hampir' : 'Aman';
+    html += `<div class="quota-item">
+      <div class="quota-head">
+        <span class="quota-name">${k.kategori}</span>
+        <div class="quota-info"><span>${formatRp(k.terpakai)} / ${formatRp(k.target)}</span><span class="badge ${badgeClass}">${badgeText}</span></div>
+      </div>
+      <div class="bar-bg"><div class="bar-fill ${barClass}" style="width:${pct}%"></div></div>
+    </div>`;
+  });
+  html += '</div>';
+
+  html += `<div class="card"><div class="card-title">💳 Saldo Akun Kas</div>`;
+  d.akunList.forEach(a => {
+    html += `<div class="akun-item"><span class="akun-nama">${a.nama}</span><span class="akun-saldo">${formatRpFull(a.saldo)}</span></div>`;
+  });
+  html += `<div class="total-row"><span>Total</span><span>${formatRpFull(d.totalSaldo)}</span></div></div>`;
+
+  document.getElementById('content-dashboard').innerHTML = html;
+}
+
+function renderTransaksi() {
+  if (!appData) return;
+  let html = `<div class="card" style="margin-top:4px"><div class="card-title">🕒 10 Transaksi Terbaru</div>`;
+  if (!appData.recent || appData.recent.length === 0) {
+    html += '<div style="text-align:center;color:#999;padding:24px;font-size:14px">Belum ada transaksi</div>';
+  } else {
+    appData.recent.forEach(t => {
+      const isIncome = t.tipe === 'income';
+      html += `<div class="txn-item">
+        <div class="txn-left">
+          <div class="txn-icon" style="background:${isIncome ? '#E1F5EE' : '#FCEBEB'}">${isIncome ? '💰' : '💸'}</div>
+          <div>
+            <div class="txn-cat">${t.kategori}</div>
+            <div class="txn-meta">${t.akun} · ${t.tanggal}${t.catatan ? ' · ' + t.catatan : ''}</div>
+          </div>
+        </div>
+        <div class="${isIncome ? 'txn-plus' : 'txn-minus'}">${isIncome ? '+' : '-'}${formatRpFull(t.nominal)}</div>
+      </div>`;
+    });
+  }
+  html += '</div>';
+  document.getElementById('content-transaksi').innerHTML = html;
+}
+
+loadData();
+</script>
+</body>
+</html>
