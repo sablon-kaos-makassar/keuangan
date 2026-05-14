@@ -138,6 +138,10 @@
           <label>Nominal (Rp)</label>
           <input type="number" id="input-nominal-keluar" placeholder="contoh: 50000" inputmode="numeric">
         </div>
+       <div class="form-group">
+         <label>Tanggal</label>
+         <input type="date" id="input-tanggal-keluar">
+       </div>
         <div class="form-group">
           <label>Akun Kas</label>
           <select id="input-akun-keluar"><option value="">Pilih akun...</option></select>
@@ -161,6 +165,10 @@
           <label>Nominal (Rp)</label>
           <input type="number" id="input-nominal-masuk" placeholder="contoh: 5000000" inputmode="numeric">
         </div>
+       <div class="form-group">
+         <label>Tanggal</label>
+         <input type="date" id="input-tanggal-keluar">
+       </div>
         <div class="form-group">
           <label>Akun Kas</label>
           <select id="input-akun-masuk"><option value="">Pilih akun...</option></select>
@@ -185,6 +193,10 @@
           <label>Nominal (Rp)</label>
           <input type="number" id="input-nominal-transfer" placeholder="contoh: 100000" inputmode="numeric">
         </div>
+       <div class="form-group">
+         <label>Tanggal</label>
+         <input type="date" id="input-tanggal-keluar">
+       </div>
         <div class="form-group">
           <label>Catatan (opsional)</label>
           <input type="text" id="input-catatan-transfer" placeholder="opsional">
@@ -430,8 +442,15 @@ function renderTransaksi() {
   html += '</div>';
   document.getElementById('content-transaksi').innerHTML = html;
 }
-
+function setDefaultTanggal() {
+  const today = new Date().toISOString().split('T')[0];
+  ['input-tanggal-keluar', 'input-tanggal-masuk', 'input-tanggal-transfer'].forEach(id => {
+    document.getElementById(id).value = today;
+  });
+}
+ 
 loadData();
+ setDefaultTanggal();
 </script>
 </body>
 </html>
