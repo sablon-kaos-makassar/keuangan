@@ -281,21 +281,31 @@ function setTipe(tipe) {
   document.getElementById('group-transfer').style.display = tipe === 'transfer' ? 'block' : 'none';
 }
 
-function formatRp(n) {
+// function formatRp(n) {
+//   if (!n && n !== 0) return 'Rp 0';
+//   const abs = Math.abs(n);
+//   if (abs >= 1000000) return 'Rp ' + (abs/1000000).toFixed(1).replace('.0','') + ' jt';
+//   if (abs >= 1000) return 'Rp ' + (abs/1000).toFixed(0) + ' rb';
+//   return 'Rp ' + abs.toLocaleString('id-ID');
+// }
+ function formatRp(n) {
   if (!n && n !== 0) return 'Rp 0';
   const abs = Math.abs(n);
-  if (abs >= 1000000) return 'Rp ' + (abs/1000000).toFixed(1).replace('.0','') + ' jt';
-  if (abs >= 1000) return 'Rp ' + (abs/1000).toFixed(0) + ' rb';
-  return 'Rp ' + abs.toLocaleString('id-ID');
+  const formatted = abs.toLocaleString('id-ID');
+  return (n < 0 ? '-' : '') + 'Rp ' + formatted;
 }
-
-function formatRpFull(n) { return 'Rp ' + Math.abs(n || 0).toLocaleString('id-ID'); }
-
-function showToast(msg, type) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.className = 'toast ' + type + ' show';
-  setTimeout(() => t.classList.remove('show'), 3000);
+function formatRpFull(n) {
+  const abs = Math.abs(n || 0);
+  const formatted = abs.toLocaleString('id-ID');
+  return ((n || 0) < 0 ? '-' : '') + 'Rp ' + formatted;
 }
+// function formatRpFull(n) { return 'Rp ' + Math.abs(n || 0).toLocaleString('id-ID'); }
+
+// function showToast(msg, type) {
+//   const t = document.getElementById('toast');
+//   t.textContent = msg; t.className = 'toast ' + type + ' show';
+//   setTimeout(() => t.classList.remove('show'), 3000);
+// }
 
 async function loadData() {
   document.getElementById('content-dashboard').innerHTML = '<div class="loading"><span class="spinner"></span>Memuat data...</div>';
