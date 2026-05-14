@@ -17,9 +17,13 @@
   .tab { flex: 1; padding: 14px; text-align: center; font-size: 14px; font-weight: 500; color: #888; cursor: pointer; border-bottom: 2px solid transparent; }
   .tab.active { color: #1E3A5F; border-bottom-color: #1E3A5F; }
 
-  .container { padding: 16px; max-width: 480px; margin: 0 auto; }
+  .container { padding: 16px; }
   .page { display: none; }
   .page.active { display: block; }
+
+  .filter-bar { display: flex; gap: 8px; margin-bottom: 16px; }
+  .filter-bar select { flex: 1; padding: 10px 12px; border: 1.5px solid #E8ECF0; border-radius: 10px; font-size: 14px; background: white; color: #1a1a1a; -webkit-appearance: none; }
+  .filter-bar button { padding: 10px 16px; background: #1E3A5F; color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; }
 
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
   .metric { background: white; border-radius: 16px; padding: 18px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
@@ -63,6 +67,8 @@
   .akun-saldo { font-size: 15px; font-weight: 600; }
   .total-row { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; margin-top: 4px; border-top: 2px solid #E8ECF0; }
   .total-row span { font-size: 15px; font-weight: 700; }
+
+  .download-btn { width: 100%; padding: 14px; background: #1E3A5F; color: white; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; margin-bottom: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; }
 
   /* Form */
   .tipe-toggle { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 18px; }
@@ -115,10 +121,24 @@
 
 <div class="container">
 
+  <!-- DASHBOARD -->
   <div class="page active" id="page-dashboard">
+    <div class="filter-bar">
+      <select id="filter-bulan">
+        <option value="1">Januari</option><option value="2">Februari</option>
+        <option value="3">Maret</option><option value="4">April</option>
+        <option value="5">Mei</option><option value="6">Juni</option>
+        <option value="7">Juli</option><option value="8">Agustus</option>
+        <option value="9">September</option><option value="10">Oktober</option>
+        <option value="11">November</option><option value="12">Desember</option>
+      </select>
+      <select id="filter-tahun"></select>
+      <button onclick="loadData()">Tampilkan</button>
+    </div>
     <div id="content-dashboard"><div class="loading"><span class="spinner"></span>Memuat data...</div></div>
   </div>
 
+  <!-- INPUT -->
   <div class="page" id="page-input">
     <div class="card" style="margin-top:4px">
       <div class="card-title">Tambah Transaksi</div>
@@ -138,10 +158,10 @@
           <label>Nominal (Rp)</label>
           <input type="number" id="input-nominal-keluar" placeholder="contoh: 50000" inputmode="numeric">
         </div>
-       <div class="form-group">
-         <label>Tanggal</label>
-         <input type="date" id="input-tanggal-keluar">
-       </div>
+        <div class="form-group">
+          <label>Tanggal</label>
+          <input type="date" id="input-tanggal-keluar">
+        </div>
         <div class="form-group">
           <label>Akun Kas</label>
           <select id="input-akun-keluar"><option value="">Pilih akun...</option></select>
@@ -165,10 +185,10 @@
           <label>Nominal (Rp)</label>
           <input type="number" id="input-nominal-masuk" placeholder="contoh: 5000000" inputmode="numeric">
         </div>
-       <div class="form-group">
-         <label>Tanggal</label>
-         <input type="date" id="input-tanggal-keluar">
-       </div>
+        <div class="form-group">
+          <label>Tanggal</label>
+          <input type="date" id="input-tanggal-masuk">
+        </div>
         <div class="form-group">
           <label>Akun Kas</label>
           <select id="input-akun-masuk"><option value="">Pilih akun...</option></select>
@@ -193,10 +213,10 @@
           <label>Nominal (Rp)</label>
           <input type="number" id="input-nominal-transfer" placeholder="contoh: 100000" inputmode="numeric">
         </div>
-       <div class="form-group">
-         <label>Tanggal</label>
-         <input type="date" id="input-tanggal-keluar">
-       </div>
+        <div class="form-group">
+          <label>Tanggal</label>
+          <input type="date" id="input-tanggal-transfer">
+        </div>
         <div class="form-group">
           <label>Catatan (opsional)</label>
           <input type="text" id="input-catatan-transfer" placeholder="opsional">
@@ -207,7 +227,9 @@
     </div>
   </div>
 
+  <!-- TRANSAKSI -->
   <div class="page" id="page-transaksi">
+    <button class="download-btn" onclick="downloadBackup()">⬇️ Download Backup (CSV)</button>
     <div id="content-transaksi"><div class="loading"><span class="spinner"></span>Memuat...</div></div>
   </div>
 
@@ -219,6 +241,25 @@
 let appData = null;
 let tipeAktif = 'keluar';
 const bulanNama = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+
+// Init filter tahun & bulan
+const now = new Date();
+const tahunSelect = document.getElementById('filter-tahun');
+for (let y = 2024; y <= now.getFullYear() + 1; y++) {
+  const opt = document.createElement('option');
+  opt.value = y; opt.textContent = y;
+  if (y === now.getFullYear()) opt.selected = true;
+  tahunSelect.appendChild(opt);
+}
+document.getElementById('filter-bulan').value = now.getMonth() + 1;
+
+function setDefaultTanggal() {
+  const today = now.toISOString().split('T')[0];
+  ['input-tanggal-keluar', 'input-tanggal-masuk', 'input-tanggal-transfer'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = today;
+  });
+}
 
 function showPage(page, el) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -248,21 +289,21 @@ function formatRp(n) {
   return 'Rp ' + abs.toLocaleString('id-ID');
 }
 
-function formatRpFull(n) {
-  return 'Rp ' + Math.abs(n || 0).toLocaleString('id-ID');
-}
+function formatRpFull(n) { return 'Rp ' + Math.abs(n || 0).toLocaleString('id-ID'); }
 
 function showToast(msg, type) {
   const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast ' + type + ' show';
+  t.textContent = msg; t.className = 'toast ' + type + ' show';
   setTimeout(() => t.classList.remove('show'), 3000);
 }
 
 async function loadData() {
   document.getElementById('content-dashboard').innerHTML = '<div class="loading"><span class="spinner"></span>Memuat data...</div>';
+  const bulan = document.getElementById('filter-bulan').value;
+  const tahun = document.getElementById('filter-tahun').value;
+  document.getElementById('bulan-label').textContent = bulanNama[bulan-1] + ' ' + tahun;
   try {
-    const res = await fetch(API_URL + '?action=dashboard');
+    const res = await fetch(`${API_URL}?action=dashboard&bulan=${bulan}&tahun=${tahun}`);
     const data = await res.json();
     appData = data;
     renderDashboard();
@@ -274,20 +315,15 @@ async function loadData() {
 
 function populateDropdowns() {
   if (!appData) return;
-
   const selKat = document.getElementById('input-kategori-expense');
   selKat.innerHTML = '<option value="">Pilih kategori...</option>';
-  appData.kuota.forEach(k => {
-    selKat.innerHTML += `<option value="${k.kategori}">${k.kategori}</option>`;
-  });
+  appData.kuota.forEach(k => { selKat.innerHTML += `<option value="${k.kategori}">${k.kategori}</option>`; });
 
   ['input-akun-keluar', 'input-akun-masuk', 'transfer-dari', 'transfer-tujuan'].forEach(id => {
     const sel = document.getElementById(id);
     const placeholder = id.includes('dari') ? 'Pilih akun asal...' : id.includes('tujuan') ? 'Pilih akun tujuan...' : 'Pilih akun...';
     sel.innerHTML = `<option value="">${placeholder}</option>`;
-    appData.akunList.forEach(a => {
-      sel.innerHTML += `<option value="${a.nama}">${a.nama}</option>`;
-    });
+    appData.akunList.forEach(a => { sel.innerHTML += `<option value="${a.nama}">${a.nama}</option>`; });
   });
 }
 
@@ -299,43 +335,41 @@ async function submitTransaksi() {
     const tujuan = document.getElementById('transfer-tujuan').value;
     const nominal = parseInt(document.getElementById('input-nominal-transfer').value);
     const catatan = document.getElementById('input-catatan-transfer').value.trim();
+    const tanggal = document.getElementById('input-tanggal-transfer').value;
 
     if (!dari) { showToast('⚠️ Pilih akun asal', 'error'); return; }
     if (!tujuan) { showToast('⚠️ Pilih akun tujuan', 'error'); return; }
     if (dari === tujuan) { showToast('⚠️ Akun asal dan tujuan tidak boleh sama', 'error'); return; }
     if (!nominal || isNaN(nominal) || nominal <= 0) { showToast('⚠️ Nominal tidak valid', 'error'); return; }
 
-    btn.textContent = 'Menyimpan...';
-    btn.disabled = true;
-
+    btn.textContent = 'Menyimpan...'; btn.disabled = true;
     try {
-      const params = new URLSearchParams({ action: 'submit', tipe: 'transfer', kategori: 'transfer', nominal, akun: dari, catatan: tujuan + (catatan ? '|' + catatan : '') });
+      const params = new URLSearchParams({ action: 'submit', tipe: 'transfer', kategori: 'transfer', nominal, akun: dari, catatan: tujuan + (catatan ? '|' + catatan : ''), tanggal });
       const res = await fetch(API_URL + '?' + params.toString());
       const result = await res.json();
-      btn.disabled = false;
-      btn.textContent = 'Simpan Transfer';
+      btn.disabled = false; btn.textContent = 'Simpan Transfer';
       if (result.ok) {
         showToast('✅ ' + result.msg, 'success');
         document.getElementById('input-nominal-transfer').value = '';
         document.getElementById('input-catatan-transfer').value = '';
         document.getElementById('transfer-dari').value = '';
         document.getElementById('transfer-tujuan').value = '';
+        setDefaultTanggal();
         loadData();
-      } else {
-        showToast('❌ ' + result.msg, 'error');
-      }
+      } else { showToast('❌ ' + result.msg, 'error'); }
     } catch(err) {
-      btn.disabled = false;
-      btn.textContent = 'Simpan Transfer';
+      btn.disabled = false; btn.textContent = 'Simpan Transfer';
       showToast('❌ ' + err.message, 'error');
     }
     return;
   }
 
-  const nominal = parseInt(document.getElementById(tipeAktif === 'keluar' ? 'input-nominal-keluar' : 'input-nominal-masuk').value);
-  const akun = document.getElementById(tipeAktif === 'keluar' ? 'input-akun-keluar' : 'input-akun-masuk').value;
-  const catatan = document.getElementById(tipeAktif === 'keluar' ? 'input-catatan-keluar' : 'input-catatan-masuk').value.trim();
-  const kategori = tipeAktif === 'keluar'
+  const isKeluar = tipeAktif === 'keluar';
+  const nominal = parseInt(document.getElementById(isKeluar ? 'input-nominal-keluar' : 'input-nominal-masuk').value);
+  const akun = document.getElementById(isKeluar ? 'input-akun-keluar' : 'input-akun-masuk').value;
+  const catatan = document.getElementById(isKeluar ? 'input-catatan-keluar' : 'input-catatan-masuk').value.trim();
+  const tanggal = document.getElementById(isKeluar ? 'input-tanggal-keluar' : 'input-tanggal-masuk').value;
+  const kategori = isKeluar
     ? document.getElementById('input-kategori-expense').value
     : document.getElementById('input-kategori-income').value;
 
@@ -343,35 +377,65 @@ async function submitTransaksi() {
   if (!nominal || isNaN(nominal) || nominal <= 0) { showToast('⚠️ Nominal tidak valid', 'error'); return; }
   if (!akun) { showToast('⚠️ Pilih akun kas dulu', 'error'); return; }
 
-  btn.textContent = 'Menyimpan...';
-  btn.disabled = true;
-
+  btn.textContent = 'Menyimpan...'; btn.disabled = true;
   try {
-    const params = new URLSearchParams({ action: 'submit', tipe: tipeAktif, kategori, nominal, akun, catatan });
+    const params = new URLSearchParams({ action: 'submit', tipe: tipeAktif, kategori, nominal, akun, catatan, tanggal });
     const res = await fetch(API_URL + '?' + params.toString());
     const result = await res.json();
     btn.disabled = false;
-    btn.textContent = tipeAktif === 'keluar' ? 'Simpan Pengeluaran' : 'Simpan Pemasukan';
+    btn.textContent = isKeluar ? 'Simpan Pengeluaran' : 'Simpan Pemasukan';
     if (result.ok) {
       showToast('✅ ' + result.msg, 'success');
-      document.getElementById(tipeAktif === 'keluar' ? 'input-nominal-keluar' : 'input-nominal-masuk').value = '';
-      document.getElementById(tipeAktif === 'keluar' ? 'input-catatan-keluar' : 'input-catatan-masuk').value = '';
-      if (tipeAktif === 'keluar') document.getElementById('input-kategori-expense').value = '';
+      document.getElementById(isKeluar ? 'input-nominal-keluar' : 'input-nominal-masuk').value = '';
+      document.getElementById(isKeluar ? 'input-catatan-keluar' : 'input-catatan-masuk').value = '';
+      if (isKeluar) document.getElementById('input-kategori-expense').value = '';
+      setDefaultTanggal();
       loadData();
-    } else {
-      showToast('❌ ' + result.msg, 'error');
-    }
+    } else { showToast('❌ ' + result.msg, 'error'); }
   } catch(err) {
     btn.disabled = false;
-    btn.textContent = tipeAktif === 'keluar' ? 'Simpan Pengeluaran' : 'Simpan Pemasukan';
+    btn.textContent = isKeluar ? 'Simpan Pengeluaran' : 'Simpan Pemasukan';
     showToast('❌ ' + err.message, 'error');
   }
 }
 
+async function downloadBackup() {
+  showToast('⏳ Menyiapkan backup...', 'success');
+  try {
+    const res = await fetch(`${API_URL}?action=backup`);
+    const data = await res.json();
+
+    let csv1 = 'Tanggal,Tipe,Kategori,Nominal,Akun,Catatan\n';
+    data.transaksi.forEach(r => { csv1 += r.map(c => `"${c}"`).join(',') + '\n'; });
+    downloadCSV(csv1, 'Transaksi.csv');
+
+    setTimeout(() => {
+      let csv2 = 'Kategori,Target,Terpakai,Sisa\n';
+      data.budget.forEach(r => { csv2 += r.map(c => `"${c}"`).join(',') + '\n'; });
+      downloadCSV(csv2, 'Budget_Kuota.csv');
+    }, 500);
+
+    setTimeout(() => {
+      let csv3 = 'Nama Akun,Saldo Awal,Saldo Saat Ini\n';
+      data.akun.forEach(r => { csv3 += r.map(c => `"${c}"`).join(',') + '\n'; });
+      downloadCSV(csv3, 'Akun_Kas.csv');
+      showToast('✅ Backup berhasil (3 file CSV)', 'success');
+    }, 1000);
+  } catch(err) {
+    showToast('❌ Gagal backup: ' + err.message, 'error');
+  }
+}
+
+function downloadCSV(content, filename) {
+  const blob = new Blob(['\uFEFF' + content], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
 function renderDashboard() {
   const d = appData;
-  const now = new Date();
-  document.getElementById('bulan-label').textContent = bulanNama[now.getMonth()] + ' ' + now.getFullYear();
   const amanCount = d.kuota.filter(k => k.terpakai <= k.target).length;
   let html = '';
 
@@ -383,21 +447,25 @@ function renderDashboard() {
   </div>`;
 
   html += `<div class="card"><div class="card-title"><span>🎯 Kuota Pengeluaran</span><span class="badge badge-ok">${amanCount} aman</span></div>`;
-  d.kuota.forEach(k => {
-    const pct = k.target > 0 ? Math.min((k.terpakai / k.target) * 100, 100) : 0;
-    const over = k.terpakai > k.target;
-    const warn = !over && pct >= 90;
-    const barClass = over ? 'bar-over' : warn ? 'bar-warn' : 'bar-ok';
-    const badgeClass = over ? 'badge-over' : warn ? 'badge-warn' : 'badge-ok';
-    const badgeText = over ? 'Lewat!' : warn ? 'Hampir' : 'Aman';
-    html += `<div class="quota-item">
-      <div class="quota-head">
-        <span class="quota-name">${k.kategori}</span>
-        <div class="quota-info"><span>${formatRp(k.terpakai)} / ${formatRp(k.target)}</span><span class="badge ${badgeClass}">${badgeText}</span></div>
-      </div>
-      <div class="bar-bg"><div class="bar-fill ${barClass}" style="width:${pct}%"></div></div>
-    </div>`;
-  });
+  if (d.kuota.length === 0) {
+    html += '<div style="text-align:center;color:#999;padding:16px;font-size:14px">Tidak ada data kuota untuk bulan ini</div>';
+  } else {
+    d.kuota.forEach(k => {
+      const pct = k.target > 0 ? Math.min((k.terpakai / k.target) * 100, 100) : 0;
+      const over = k.terpakai > k.target;
+      const warn = !over && pct >= 90;
+      const barClass = over ? 'bar-over' : warn ? 'bar-warn' : 'bar-ok';
+      const badgeClass = over ? 'badge-over' : warn ? 'badge-warn' : 'badge-ok';
+      const badgeText = over ? 'Lewat!' : warn ? 'Hampir' : 'Aman';
+      html += `<div class="quota-item">
+        <div class="quota-head">
+          <span class="quota-name">${k.kategori}</span>
+          <div class="quota-info"><span>${formatRp(k.terpakai)} / ${formatRp(k.target)}</span><span class="badge ${badgeClass}">${badgeText}</span></div>
+        </div>
+        <div class="bar-bg"><div class="bar-fill ${barClass}" style="width:${pct}%"></div></div>
+      </div>`;
+    });
+  }
   html += '</div>';
 
   html += `<div class="card"><div class="card-title">💳 Saldo Akun Kas</div>`;
@@ -411,7 +479,7 @@ function renderDashboard() {
 
 function renderTransaksi() {
   if (!appData) return;
-  let html = `<div class="card" style="margin-top:4px"><div class="card-title">🕒 10 Transaksi Terbaru</div>`;
+  let html = `<div class="card"><div class="card-title">🕒 10 Transaksi Terbaru</div>`;
   if (!appData.recent || appData.recent.length === 0) {
     html += '<div style="text-align:center;color:#999;padding:24px;font-size:14px">Belum ada transaksi</div>';
   } else {
@@ -419,14 +487,11 @@ function renderTransaksi() {
       const isIncome = t.tipe === 'income';
       const isTransferIn = t.tipe === 'transfer in';
       const isTransferOut = t.tipe === 'transfer out';
-      const isTransfer = isTransferIn || isTransferOut;
-
       let icon, bgColor, amountClass, prefix;
       if (isIncome) { icon = '💰'; bgColor = '#E1F5EE'; amountClass = 'txn-plus'; prefix = '+'; }
       else if (isTransferIn) { icon = '📥'; bgColor = '#EEF2FF'; amountClass = 'txn-transfer'; prefix = '↓'; }
       else if (isTransferOut) { icon = '📤'; bgColor = '#EEF2FF'; amountClass = 'txn-transfer'; prefix = '↑'; }
       else { icon = '💸'; bgColor = '#FCEBEB'; amountClass = 'txn-minus'; prefix = '-'; }
-
       html += `<div class="txn-item">
         <div class="txn-left">
           <div class="txn-icon" style="background:${bgColor}">${icon}</div>
@@ -442,15 +507,9 @@ function renderTransaksi() {
   html += '</div>';
   document.getElementById('content-transaksi').innerHTML = html;
 }
-function setDefaultTanggal() {
-  const today = new Date().toISOString().split('T')[0];
-  ['input-tanggal-keluar', 'input-tanggal-masuk', 'input-tanggal-transfer'].forEach(id => {
-    document.getElementById(id).value = today;
-  });
-}
- 
+
+setDefaultTanggal();
 loadData();
- setDefaultTanggal();
 </script>
 </body>
 </html>
